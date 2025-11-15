@@ -1,12 +1,7 @@
-import Card from "@/app/Card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Image from "next/image"
-
 export default function Home() {
   return (
-    <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-      <Card />
+    <main>
+      <h1 className="text-4xl text-center">Hello</h1>
     </main>
   )
 }

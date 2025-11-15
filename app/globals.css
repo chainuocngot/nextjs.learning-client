@@ -125,9 +125,3 @@
     color: red;
   }
 }
-
-@layer utilities {
-  .text-mini {
-    @apply text-yellow-50;
-  }
-}
