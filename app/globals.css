@@ -116,12 +116,8 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
-  }
-  h1,
-  h2,
-  h3 {
-    color: red;
   }
 }
