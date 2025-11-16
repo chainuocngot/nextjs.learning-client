@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ModeToggle } from "@/components/mode-toggle"
 import Header from "@/components/header"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["vietnamese"],
@@ -30,6 +31,7 @@ export default function RootLayout({
         >
           <Header />
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
