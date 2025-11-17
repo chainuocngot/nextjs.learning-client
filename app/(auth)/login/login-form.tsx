@@ -1,10 +1,10 @@
 "use client"
 
+import { useAppContext } from "@/app/app-provider"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import z from "zod"
 
 export default function LoginForm() {
+  const { setSessionToken } = useAppContext()
   const form = useForm<z.infer<typeof LoginBody>>({
     resolver: zodResolver(LoginBody),
     defaultValues: {
@@ -28,48 +29,58 @@ export default function LoginForm() {
   })
 
   async function onSubmit(values: z.infer<typeof LoginBody>) {
-    const result = await fetch(
-      `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`,
-      {
+    try {
+      const response = await fetch(
+        `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`,
+        {
+          method: "POST",
+          body: JSON.stringify(values),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      const payload = await response.json()
+      const data = {
+        status: response.status,
+        payload,
+      }
+
+      if (!response.ok) {
+        throw data
+      }
+
+      toast.success(data.payload.message)
+
+      const resultFromNextServer = await fetch("/api/auth", {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify(data),
         headers: {
           "Content-Type": "application/json",
         },
-      },
-    )
-      .then(async (res) => {
-        const payload = await res.json()
-        const data = {
-          status: res.status,
-          payload,
-        }
+      }).then((res) => res.json())
 
-        if (!res.ok) {
-          throw data
-        }
+      setSessionToken(resultFromNextServer.data.token)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errors = error.payload.errors as {
+        field: keyof LoginBodyType
+        message: string
+      }[]
+      const status = error.status
 
-        toast.success(data.payload.message)
-        return data
-      })
-      .catch((error) => {
-        const errors = error.payload.errors as {
-          field: keyof LoginBodyType
-          message: string
-        }[]
-        const status = error.status
-
-        if (status === 422) {
-          for (const error of errors) {
-            form.setError(error.field, {
-              type: "server",
-              message: error.message,
-            })
-          }
-        } else {
-          toast.error(error.payload.message)
+      if (status === 422) {
+        for (const error of errors) {
+          form.setError(error.field, {
+            type: "server",
+            message: error.message,
+          })
         }
-      })
+      } else {
+        toast.error(error.payload.message)
+      }
+    }
   }
 
   return (
