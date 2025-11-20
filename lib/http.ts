@@ -59,6 +59,9 @@ const request = async <Response>(
   const body = options?.body ? JSON.stringify(options.body) : undefined
   const baseHeaders = {
     "Content-Type": "application/json",
+    Authorization: clientSessionToken.value
+      ? `Bearer ${clientSessionToken.value}`
+      : "",
   }
 
   const baseUrl =
