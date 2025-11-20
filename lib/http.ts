@@ -2,6 +2,7 @@ import envConfig from "@/config"
 import { clientSessionToken } from "@/lib/client-session-token"
 import { normalizePath } from "@/lib/utils"
 import { LoginResType } from "@/schemaValidations/auth.schema"
+import { redirect } from "next/navigation"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type CustomRequestInit = Omit<RequestInit, "method"> & {
@@ -9,6 +10,7 @@ type CustomRequestInit = Omit<RequestInit, "method"> & {
 }
 
 const ENTITY_ERROR_STATUS = 422
+const AUTHENTICATION_ERROR_STATUS = 401
 
 type EntityErrorPayload = {
   message: string
@@ -47,6 +49,8 @@ export class EntityError extends HttpError {
   }
 }
 
+let clientLogoutRequest: null | Promise<any> = null
+
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
@@ -79,6 +83,29 @@ const request = async <Response>(
   if (!res.ok) {
     if (res.status === ENTITY_ERROR_STATUS) {
       throw new EntityError(data.payload as EntityErrorPayload)
+    } else if (res.status === AUTHENTICATION_ERROR_STATUS) {
+      if (typeof window !== "undefined") {
+        if (!clientLogoutRequest) {
+          clientLogoutRequest = fetch("/api/auth/logout", {
+            method: "POST",
+            body: JSON.stringify({
+              force: true,
+            }),
+            headers: {
+              ...baseHeaders,
+            },
+          })
+          await clientLogoutRequest
+          clientLogoutRequest = null
+          clientSessionToken.value = ""
+          location.href = "/login"
+        }
+      } else {
+        const sessionToken = (options?.headers as any).Authorization.split(
+          "Bearer ",
+        )[1]
+        redirect(`/logout?sessionToken=${sessionToken}`)
+      }
     } else {
       throw new HttpError(data)
     }

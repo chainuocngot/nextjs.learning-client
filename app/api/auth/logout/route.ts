@@ -2,7 +2,24 @@ import authApiRequest from "@/api-requests/auth"
 import { HttpError } from "@/lib/http"
 import { cookies } from "next/headers"
 
-export async function POST() {
+export async function POST(request: Request) {
+  const req = await request.json()
+  const force = req.force as boolean | undefined
+
+  if (force) {
+    return Response.json(
+      {
+        message: "Buộc đăng xuất thành công",
+      },
+      {
+        status: 200,
+        headers: {
+          "Set-Cookie": `sessionToken=; path=/; httpOnly`,
+        },
+      },
+    )
+  }
+
   const cookieStore = await cookies()
   const sessionToken = cookieStore.get("sessionToken")
 
