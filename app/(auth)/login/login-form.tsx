@@ -12,14 +12,17 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { clientSessionToken } from "@/lib/client-session-token"
-import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema"
+import { handleErrorApi } from "@/lib/utils"
+import { LoginBody } from "@/schemaValidations/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
 
 export default function LoginForm() {
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const form = useForm<z.infer<typeof LoginBody>>({
     resolver: zodResolver(LoginBody),
@@ -30,7 +33,10 @@ export default function LoginForm() {
   })
 
   async function onSubmit(values: z.infer<typeof LoginBody>) {
+    if (loading) return
+
     try {
+      setLoading(true)
       const result = await authApiRequest.login(values)
 
       toast.success(result.payload.message)
@@ -39,28 +45,17 @@ export default function LoginForm() {
         sessionToken: result.payload.data.token,
       })
 
-      // eslint-disable-next-line react-hooks/immutability
       clientSessionToken.value = result.payload.data.token
       // setSessionToken(result.payload.data.token)
       router.push("/me")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const errors = error.payload.errors as {
-        field: keyof LoginBodyType
-        message: string
-      }[]
-      const status = error.status
-
-      if (status === 422) {
-        for (const error of errors) {
-          form.setError(error.field, {
-            type: "server",
-            message: error.message,
-          })
-        }
-      } else {
-        toast.error(error.payload.message)
-      }
+      handleErrorApi({
+        error,
+        setError: form.setError,
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -96,7 +91,11 @@ export default function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full cursor-pointer">
+        <Button
+          disabled={loading}
+          type="submit"
+          className="w-full cursor-pointer"
+        >
           Submit
         </Button>
       </form>

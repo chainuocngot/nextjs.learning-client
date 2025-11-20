@@ -11,16 +11,18 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import envConfig from "@/config"
 import { clientSessionToken } from "@/lib/client-session-token"
-import { RegisterBody, RegisterBodyType } from "@/schemaValidations/auth.schema"
+import { handleErrorApi } from "@/lib/utils"
+import { RegisterBody } from "@/schemaValidations/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
 
 export default function RegisterForm() {
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const form = useForm<z.infer<typeof RegisterBody>>({
     resolver: zodResolver(RegisterBody),
@@ -33,7 +35,10 @@ export default function RegisterForm() {
   })
 
   async function onSubmit(values: z.infer<typeof RegisterBody>) {
+    if (loading) return
+
     try {
+      setLoading(true)
       const result = await authApiRequest.register(values)
 
       toast.success(result.payload.message)
@@ -42,27 +47,16 @@ export default function RegisterForm() {
         sessionToken: result.payload.data.token,
       })
 
-      // eslint-disable-next-line react-hooks/immutability
       clientSessionToken.value = result.payload.data.token
       router.push("/me")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const errors = error.payload.errors as {
-        field: keyof RegisterBodyType
-        message: string
-      }[]
-      const status = error.status
-
-      if (status === 422) {
-        for (const error of errors) {
-          form.setError(error.field, {
-            type: "server",
-            message: error.message,
-          })
-        }
-      } else {
-        toast.error(error.payload.message)
-      }
+      handleErrorApi({
+        error,
+        setError: form.setError,
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -124,7 +118,11 @@ export default function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full cursor-pointer">
+        <Button
+          disabled={loading}
+          type="submit"
+          className="w-full cursor-pointer"
+        >
           Submit
         </Button>
       </form>
