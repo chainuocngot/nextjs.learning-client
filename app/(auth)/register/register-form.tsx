@@ -1,10 +1,10 @@
 "use client"
 
+import authApiRequest from "@/api-requests/auth"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -12,12 +12,16 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import envConfig from "@/config"
-import { RegisterBody } from "@/schemaValidations/auth.schema"
+import { clientSessionToken } from "@/lib/client-session-token"
+import { RegisterBody, RegisterBodyType } from "@/schemaValidations/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import z from "zod"
 
 export default function RegisterForm() {
+  const router = useRouter()
   const form = useForm<z.infer<typeof RegisterBody>>({
     resolver: zodResolver(RegisterBody),
     defaultValues: {
@@ -29,16 +33,37 @@ export default function RegisterForm() {
   })
 
   async function onSubmit(values: z.infer<typeof RegisterBody>) {
-    const result = await fetch(
-      `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/register`,
-      {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    ).then((res) => res.json())
+    try {
+      const result = await authApiRequest.register(values)
+
+      toast.success(result.payload.message)
+
+      await authApiRequest.auth({
+        sessionToken: result.payload.data.token,
+      })
+
+      // eslint-disable-next-line react-hooks/immutability
+      clientSessionToken.value = result.payload.data.token
+      router.push("/me")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errors = error.payload.errors as {
+        field: keyof RegisterBodyType
+        message: string
+      }[]
+      const status = error.status
+
+      if (status === 422) {
+        for (const error of errors) {
+          form.setError(error.field, {
+            type: "server",
+            message: error.message,
+          })
+        }
+      } else {
+        toast.error(error.payload.message)
+      }
+    }
   }
 
   return (

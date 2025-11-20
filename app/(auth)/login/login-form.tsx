@@ -1,6 +1,6 @@
 "use client"
 
-import { useAppContext } from "@/app/app-provider"
+import authApiRequest from "@/api-requests/auth"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -11,15 +11,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import envConfig from "@/config"
+import { clientSessionToken } from "@/lib/client-session-token"
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
 
 export default function LoginForm() {
-  const { setSessionToken } = useAppContext()
+  const router = useRouter()
   const form = useForm<z.infer<typeof LoginBody>>({
     resolver: zodResolver(LoginBody),
     defaultValues: {
@@ -30,38 +31,18 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof LoginBody>) {
     try {
-      const response = await fetch(
-        `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`,
-        {
-          method: "POST",
-          body: JSON.stringify(values),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      )
+      const result = await authApiRequest.login(values)
 
-      const payload = await response.json()
-      const data = {
-        status: response.status,
-        payload,
-      }
+      toast.success(result.payload.message)
 
-      if (!response.ok) {
-        throw data
-      }
+      await authApiRequest.auth({
+        sessionToken: result.payload.data.token,
+      })
 
-      toast.success(data.payload.message)
-
-      const resultFromNextServer = await fetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json())
-
-      setSessionToken(resultFromNextServer.data.token)
+      // eslint-disable-next-line react-hooks/immutability
+      clientSessionToken.value = result.payload.data.token
+      // setSessionToken(result.payload.data.token)
+      router.push("/me")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errors = error.payload.errors as {
