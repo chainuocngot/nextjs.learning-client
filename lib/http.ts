@@ -96,8 +96,10 @@ const request = async <Response>(
             },
           })
           await clientLogoutRequest
-          clientLogoutRequest = null
           clientSessionToken.value = ""
+          clientSessionToken.expiresAt = new Date().toISOString()
+
+          clientLogoutRequest = null
           location.href = "/login"
         }
       } else {
@@ -118,8 +120,10 @@ const request = async <Response>(
       )
     ) {
       clientSessionToken.value = (payload as LoginResType).data.token
+      clientSessionToken.expiresAt = (payload as LoginResType).data.expiresAt
     } else if ("auth/logout" === normalizePath(url)) {
       clientSessionToken.value = ""
+      clientSessionToken.expiresAt = new Date().toISOString()
     }
   }
 

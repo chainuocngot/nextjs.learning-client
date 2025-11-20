@@ -41,11 +41,11 @@ export default function RegisterForm() {
       setLoading(true)
       const result = await authApiRequest.register(values)
 
-      toast.success(result.payload.message)
-
       await authApiRequest.auth({
         sessionToken: result.payload.data.token,
+        expiresAt: result.payload.data.expiresAt,
       })
+      toast.success(result.payload.message)
 
       clientSessionToken.value = result.payload.data.token
       router.push("/me")

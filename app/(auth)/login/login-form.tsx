@@ -39,14 +39,13 @@ export default function LoginForm() {
       setLoading(true)
       const result = await authApiRequest.login(values)
 
-      toast.success(result.payload.message)
-
       await authApiRequest.auth({
         sessionToken: result.payload.data.token,
+        expiresAt: result.payload.data.expiresAt,
       })
+      toast.success(result.payload.message)
 
       clientSessionToken.value = result.payload.data.token
-      // setSessionToken(result.payload.data.token)
       router.push("/me")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

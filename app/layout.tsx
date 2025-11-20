@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { ModeToggle } from "@/components/mode-toggle"
 import Header from "@/components/header"
 import { Toaster } from "@/components/ui/sonner"
 import AppProvider from "@/app/app-provider"
 import { cookies } from "next/headers"
+import SlideSession from "@/components/slide-session"
 
 const inter = Inter({
   subsets: ["vietnamese"],
@@ -38,6 +38,7 @@ export default async function RootLayout({
           <AppProvider initialSessionToken={sessionToken}>
             <Header />
             {children}
+            <SlideSession />
           </AppProvider>
         </ThemeProvider>
       </body>
