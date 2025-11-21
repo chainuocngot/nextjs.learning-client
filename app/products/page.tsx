@@ -11,7 +11,9 @@ export default async function Products() {
   return (
     <div>
       <h1>Product List</h1>
-      <Link href="/products/add">Thêm sản phẩm</Link>
+      <Link href="/products/add">
+        <Button variant="secondary">Thêm sản phẩm</Button>
+      </Link>
       <div className="space-y-5">
         {productList.map((product) => (
           <div key={product.id} className="flex space-x-4">

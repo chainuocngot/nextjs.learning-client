@@ -14,7 +14,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { handleErrorApi } from "@/lib/utils"
-import { CreateProductBody } from "@/schemaValidations/product.schema"
+import {
+  CreateProductBody,
+  ProductResType,
+} from "@/schemaValidations/product.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -23,23 +26,26 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
 
-export default function ProductAddForm() {
+export default function ProductAddForm({
+  product,
+}: {
+  product?: ProductResType["data"]
+}) {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const form = useForm<z.infer<typeof CreateProductBody>>({
     resolver: zodResolver(CreateProductBody),
     defaultValues: {
-      name: "",
-      price: 0,
-      description: "",
-      image: "",
+      name: product?.name ?? "",
+      price: product?.price ?? 0,
+      description: product?.description ?? "",
+      image: product?.image ?? "",
     },
   })
+  const image = form.watch("image")
 
-  async function onSubmit(values: z.infer<typeof CreateProductBody>) {
-    if (loading) return
-
+  const createProduct = async (values: z.infer<typeof CreateProductBody>) => {
     try {
       setLoading(true)
 
@@ -63,6 +69,48 @@ export default function ProductAddForm() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const updateProduct = async (_values: z.infer<typeof CreateProductBody>) => {
+    try {
+      setLoading(true)
+
+      let values = _values
+
+      if (file) {
+        const formData = new FormData()
+        formData.append("file", file as Blob)
+        const uploadImageResult = await productApiRequest.uploadImage(formData)
+        const imageUrl = uploadImageResult.payload.data
+
+        values = {
+          ...values,
+          image: imageUrl,
+        }
+      }
+
+      const result = await productApiRequest.update(product!.id, values)
+
+      toast.success(result.payload.message)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      handleErrorApi({
+        error,
+        setError: form.setError,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onSubmit(values: z.infer<typeof CreateProductBody>) {
+    if (loading) return
+
+    if (product) {
+      await updateProduct(values)
+    } else {
+      await createProduct(values)
     }
   }
 
@@ -138,10 +186,10 @@ export default function ProductAddForm() {
           )}
         />
 
-        {file && (
+        {(file || image) && (
           <div>
             <Image
-              src={URL.createObjectURL(file)}
+              src={file ? URL.createObjectURL(file) : image}
               alt="preview"
               className="size-32 object-cover"
               width={128}
@@ -167,7 +215,7 @@ export default function ProductAddForm() {
           type="submit"
           className="w-full cursor-pointer"
         >
-          Submit
+          {product ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
         </Button>
       </form>
     </Form>
