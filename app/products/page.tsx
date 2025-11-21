@@ -1,4 +1,5 @@
 import productApiRequest from "@/api-requests/product"
+import DeleteProductButton from "@/app/products/_components/delete-product-button"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
@@ -26,15 +27,13 @@ export default async function Products() {
             />
             <h3>{product.name}</h3>
             <div>{product.price}</div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-start">
               <Link href={`/products/${product.id}`}>
                 <Button variant="outline" className="cursor-pointer">
                   Edit
                 </Button>
               </Link>
-              <Button variant="destructive" className="cursor-pointer">
-                Delete
-              </Button>
+              <DeleteProductButton product={product} />
             </div>
           </div>
         ))}

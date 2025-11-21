@@ -167,10 +167,9 @@ const http = {
   },
   delete<Response>(
     url: string,
-    body: any,
     options?: Omit<CustomRequestInit, "body"> | undefined,
   ) {
-    return request<Response>("DELETE", url, { ...options, body })
+    return request<Response>("DELETE", url, options)
   },
 }
 
