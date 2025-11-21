@@ -1,6 +1,7 @@
 import productApiRequest from "@/api-requests/product"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import Link from "next/link"
 import React from "react"
 
 export default async function Products() {
@@ -10,6 +11,7 @@ export default async function Products() {
   return (
     <div>
       <h1>Product List</h1>
+      <Link href="/products/add">Thêm sản phẩm</Link>
       <div className="space-y-5">
         {productList.map((product) => (
           <div key={product.id} className="flex space-x-4">
@@ -23,9 +25,11 @@ export default async function Products() {
             <h3>{product.name}</h3>
             <div>{product.price}</div>
             <div className="flex space-x-2">
-              <Button variant="outline" className="cursor-pointer">
-                Edit
-              </Button>
+              <Link href={`/products/${product.id}`}>
+                <Button variant="outline" className="cursor-pointer">
+                  Edit
+                </Button>
+              </Link>
               <Button variant="destructive" className="cursor-pointer">
                 Delete
               </Button>
