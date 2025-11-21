@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner"
 import AppProvider from "@/app/app-provider"
 import { cookies } from "next/headers"
 import SlideSession from "@/components/slide-session"
+import accountApiRequest from "@/api-requests/account"
+import { AccountResType } from "@/schemaValidations/account.schema"
 
 const inter = Inter({
   subsets: ["vietnamese"],
@@ -25,6 +27,12 @@ export default async function RootLayout({
   const cookieStore = await cookies()
   const sessionToken = cookieStore.get("sessionToken")?.value
 
+  let me: AccountResType["data"] | null = null
+  if (sessionToken) {
+    const data = await accountApiRequest.me(sessionToken)
+    me = data.payload.data
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -35,8 +43,8 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppProvider initialSessionToken={sessionToken}>
-            <Header />
+          <AppProvider initialSessionToken={sessionToken} me={me}>
+            <Header me={me} />
             {children}
             <SlideSession />
           </AppProvider>
