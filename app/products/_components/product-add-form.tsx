@@ -61,6 +61,7 @@ export default function ProductAddForm({
       toast.success(result.payload.message)
 
       router.push("/products")
+      router.refresh()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       handleErrorApi({
