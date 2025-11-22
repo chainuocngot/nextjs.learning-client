@@ -1,8 +1,7 @@
 import productApiRequest from "@/api-requests/product"
 import ProductAddForm from "@/app/products/_components/product-add-form"
-import Image from "next/image"
 
-export default async function ProductDetail({
+export default async function ProductEdit({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -20,19 +19,7 @@ export default async function ProductDetail({
   return (
     <div>
       {!product && <div>Không tìm thấy sản phẩm</div>}
-      {product && (
-        <div key={product.id} className="flex space-x-4">
-          <Image
-            src={product.image}
-            alt={product.name}
-            width={180}
-            height={180}
-            className="size-32 object-cover"
-          />
-          <h3>{product.name}</h3>
-          <div>{product.price}</div>
-        </div>
-      )}
+      {product && <ProductAddForm product={product} />}
     </div>
   )
 }

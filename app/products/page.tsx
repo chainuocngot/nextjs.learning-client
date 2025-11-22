@@ -25,18 +25,20 @@ export default async function Products() {
       <div className="space-y-5">
         {productList.map((product) => (
           <div key={product.id} className="flex space-x-4">
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={180}
-              height={180}
-              className="size-32 object-cover"
-            />
+            <Link href={`/products/${product.id}`}>
+              <Image
+                src={product.image}
+                alt={product.name}
+                width={180}
+                height={180}
+                className="size-32 object-cover"
+              />
+            </Link>
             <h3>{product.name}</h3>
             <div>{product.price}</div>
             {isAuth && (
               <div className="flex space-x-2 items-start">
-                <Link href={`/products/${product.id}`}>
+                <Link href={`/products/${product.id}/edit`}>
                   <Button variant="outline" className="cursor-pointer">
                     Edit
                   </Button>
