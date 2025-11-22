@@ -1,15 +1,37 @@
 import productApiRequest from "@/api-requests/product"
 import ProductAddForm from "@/app/products/_components/product-add-form"
+import { Metadata, ResolvingMetadata } from "next"
+import { cache } from "react"
 
-export default async function ProductEdit({
-  params,
-}: {
+const getDetail = cache(productApiRequest.getDetail)
+
+type Props = {
   params: Promise<{ id: string }>
-}) {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export async function generateMetadata(
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  // read route params
+  const { id } = await params
+
+  // fetch data
+  const { payload } = await getDetail(Number(id))
+  const product = payload.data
+
+  return {
+    title: "Edit sản phẩm " + product.name,
+    description: product.description,
+  }
+}
+
+export default async function ProductEdit({ params }: Props) {
   let product = undefined
   try {
     const { id } = await params
-    const { payload } = await productApiRequest.getDetail(Number(id))
+    const { payload } = await getDetail(Number(id))
     product = payload.data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

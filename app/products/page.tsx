@@ -1,10 +1,15 @@
 import productApiRequest from "@/api-requests/product"
 import DeleteProductButton from "@/app/products/_components/delete-product-button"
 import { Button } from "@/components/ui/button"
+import { Metadata } from "next"
 import { cookies } from "next/headers"
 import Image from "next/image"
 import Link from "next/link"
-import React from "react"
+
+export const metadata: Metadata = {
+  title: "Danh sách sản phẩm",
+  description: "Danh sách sản phẩm của Productic được tạo bởi Tôi",
+}
 
 export default async function Products() {
   const cookieStore = await cookies()

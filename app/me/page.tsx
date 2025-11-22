@@ -1,7 +1,12 @@
 import accountApiRequest from "@/api-requests/account"
 import Profile from "@/app/me/profile"
 import ProfileForm from "@/app/me/profile-form"
+import { Metadata } from "next"
 import { cookies } from "next/headers"
+
+export const metadata: Metadata = {
+  title: "Thông tin cá nhân",
+}
 
 export default async function Me() {
   const cookieStore = await cookies()

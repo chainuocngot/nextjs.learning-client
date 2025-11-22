@@ -94,6 +94,7 @@ export default function ProductAddForm({
       const result = await productApiRequest.update(product!.id, values)
 
       toast.success(result.payload.message)
+      router.refresh()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       handleErrorApi({
