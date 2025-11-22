@@ -27,14 +27,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const cookieStore = await cookies()
-  const sessionToken = cookieStore.get("sessionToken")?.value
-
-  let me: AccountResType["data"] | null = null
-  if (sessionToken) {
-    const data = await accountApiRequest.me(sessionToken)
-    me = data.payload.data
-  }
+  const me: AccountResType["data"] | null = null
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -46,7 +39,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppProvider initialSessionToken={sessionToken} me={me}>
+          <AppProvider me={me}>
             <Header me={me} />
             {children}
             <SlideSession />

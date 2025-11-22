@@ -1,6 +1,5 @@
 "use client"
 
-import { clientSessionToken } from "@/lib/client-session-token"
 import { AccountResType } from "@/schemaValidations/account.schema"
 import { createContext, PropsWithChildren, useContext, useState } from "react"
 
@@ -25,18 +24,11 @@ export const useAppContext = () => {
 
 export default function AppProvider({
   children,
-  initialSessionToken = "",
   me: initialMe,
 }: PropsWithChildren & {
-  initialSessionToken?: string
   me: Me | null
 }) {
   const [me, setMe] = useState<Me | null>(initialMe)
-  useState(() => {
-    if (typeof window !== "undefined") {
-      clientSessionToken.value = initialSessionToken
-    }
-  })
 
   return <AppContext value={{ me, setMe }}>{children}</AppContext>
 }

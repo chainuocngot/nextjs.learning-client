@@ -11,7 +11,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { clientSessionToken } from "@/lib/client-session-token"
 import { handleErrorApi } from "@/lib/utils"
 import { LoginBody } from "@/schemaValidations/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -45,7 +44,7 @@ export default function LoginForm() {
       })
       toast.success(result.payload.message)
 
-      clientSessionToken.value = result.payload.data.token
+      localStorage.setItem("sessionToken", result.payload.data.token)
       router.push("/me")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

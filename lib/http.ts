@@ -1,5 +1,4 @@
 import envConfig from "@/config"
-import { clientSessionToken } from "@/lib/client-session-token"
 import { normalizePath } from "@/lib/utils"
 import { LoginResType } from "@/schemaValidations/auth.schema"
 import { redirect } from "next/navigation"
@@ -51,29 +50,37 @@ export class EntityError extends HttpError {
 
 let clientLogoutRequest: null | Promise<any> = null
 
+export const isClient = () => typeof window !== "undefined"
+
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
   options: CustomRequestInit | undefined,
 ) => {
-  const body = options?.body
-    ? options.body instanceof FormData
-      ? options.body
-      : JSON.stringify(options.body)
-    : undefined
-  const baseHeaders =
+  let body: FormData | string | undefined = undefined
+
+  if (options?.body instanceof FormData) {
+    body = options.body
+  } else if (options?.body) {
+    body = JSON.stringify(options.body)
+  }
+
+  const baseHeaders: {
+    [key: string]: string
+  } =
     body instanceof FormData
-      ? {
-          Authorization: clientSessionToken.value
-            ? `Bearer ${clientSessionToken.value}`
-            : "",
-        }
+      ? {}
       : {
           "Content-Type": "application/json",
-          Authorization: clientSessionToken.value
-            ? `Bearer ${clientSessionToken.value}`
-            : "",
         }
+
+  if (isClient()) {
+    const sessionToken = localStorage.getItem("sessionToken")
+
+    if (sessionToken) {
+      baseHeaders["Authorization"] = `Bearer ${sessionToken}`
+    }
+  }
 
   const baseUrl =
     options?.baseUrl === undefined
@@ -98,7 +105,7 @@ const request = async <Response>(
     if (res.status === ENTITY_ERROR_STATUS) {
       throw new EntityError(data.payload as EntityErrorPayload)
     } else if (res.status === AUTHENTICATION_ERROR_STATUS) {
-      if (typeof window !== "undefined") {
+      if (isClient()) {
         if (!clientLogoutRequest) {
           clientLogoutRequest = fetch("/api/auth/logout", {
             method: "POST",
@@ -109,12 +116,16 @@ const request = async <Response>(
               ...baseHeaders,
             } as any,
           })
-          await clientLogoutRequest
-          clientSessionToken.value = ""
-          clientSessionToken.expiresAt = new Date().toISOString()
 
-          clientLogoutRequest = null
-          location.href = "/login"
+          try {
+            await clientLogoutRequest
+          } catch {
+          } finally {
+            localStorage.removeItem("sessionToken")
+            localStorage.removeItem("sessionTokenExpiresAt")
+            clientLogoutRequest = null
+            location.href = "/login"
+          }
         }
       } else {
         const sessionToken = (options?.headers as any).Authorization.split(
@@ -127,17 +138,20 @@ const request = async <Response>(
     }
   }
 
-  if (typeof window !== "undefined") {
+  if (isClient()) {
     if (
-      ["/auth/login", "/auth/register"].some(
-        (path) => path === normalizePath(path),
+      ["auth/login", "auth/register"].some(
+        (path) => path === normalizePath(url),
       )
     ) {
-      clientSessionToken.value = (payload as LoginResType).data.token
-      clientSessionToken.expiresAt = (payload as LoginResType).data.expiresAt
+      const { token, expiresAt } = (payload as LoginResType).data
+
+      console.log(token, expiresAt)
+      localStorage.setItem("sessionToken", token)
+      localStorage.setItem("sessionTokenExpiresAt", expiresAt)
     } else if ("auth/logout" === normalizePath(url)) {
-      clientSessionToken.value = ""
-      clientSessionToken.expiresAt = new Date().toISOString()
+      localStorage.removeItem("sessionToken")
+      localStorage.removeItem("sessionTokenExpiresAt")
     }
   }
 
